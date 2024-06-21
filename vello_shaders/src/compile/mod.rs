@@ -5,9 +5,9 @@ use naga::front::wgsl;
 use naga::valid::{Capabilities, ModuleInfo, ValidationError, ValidationFlags};
 use naga::{AddressSpace, ArraySize, ImageClass, Module, StorageAccess, WithSpan};
 use std::collections::{HashMap, HashSet};
-use std::fmt;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
+use std::{env, fmt};
 use thiserror::Error;
 
 pub mod permutations;
@@ -273,6 +273,10 @@ fn postprocess(wgsl: &str) -> String {
 /// The path is determined at compile time and is likely only valid on the compiling machine.
 // NOTE: Embedding build environment info into the code makes reproducible builds trickier.
 pub fn shader_dir() -> &'static PathBuf {
+    let path = match env::var("VELLO_SHADER_PATH") {
+        Ok(path) => Path::new(&path).to_path_buf(),
+        _ => Path::new(env!("CARGO_MANIFEST_DIR")).join("shader"),
+    };
     static SHADER_DIR: OnceLock<PathBuf> = OnceLock::new();
-    SHADER_DIR.get_or_init(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("shader"))
+    SHADER_DIR.get_or_init(|| path)
 }
